@@ -5,6 +5,7 @@ from research_mesh.retrieval.extraction import (
     chunk_text,
     content_hash,
     deduplicate_candidates,
+    extract_pdf_text,
     extract_text,
 )
 from research_mesh.retrieval.fetch import FetchedDocument, SourceFetcher
@@ -16,6 +17,7 @@ __all__ = [
     "chunk_text",
     "content_hash",
     "deduplicate_candidates",
+    "extract_pdf_text",
     "extract_text",
     "FetchedDocument",
     "score_source",

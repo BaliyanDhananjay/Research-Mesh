@@ -43,6 +43,7 @@ class AgentTask(BaseModel):
 
 class SourceDocument(BaseModel):
     id: UUID = Field(default_factory=uuid4)
+    run_id: UUID
     url: HttpUrl
     title: str = ""
     source_type: str = "web"

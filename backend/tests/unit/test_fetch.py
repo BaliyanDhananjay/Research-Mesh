@@ -22,7 +22,7 @@ def test_fetcher_returns_bounded_html_text() -> None:
 @pytest.mark.parametrize(
     "headers, body",
     [
-        ({"content-type": "application/pdf"}, b"%PDF"),
+        ({"content-type": "application/json"}, b"{}"),
         ({"content-type": "text/plain"}, b"x" * 1_025),
     ],
 )
@@ -39,3 +39,16 @@ def test_fetcher_rejects_unsupported_or_oversized_content(
 
     with pytest.raises(ValueError):
         fetcher.fetch("https://example.com/article")
+
+
+def test_fetcher_accepts_pdf_content_type_as_raw_bytes() -> None:
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers={"content-type": "application/pdf"}, content=b"%PDF-1.4")
+
+    fetcher = SourceFetcher(client=httpx.Client(transport=httpx.MockTransport(handler)))
+
+    document = fetcher.fetch("https://example.com/paper.pdf")
+
+    assert document.content_type == "application/pdf"
+    assert document.content == ""
+    assert document.content_bytes == b"%PDF-1.4"

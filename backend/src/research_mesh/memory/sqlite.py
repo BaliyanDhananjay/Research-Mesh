@@ -2,9 +2,17 @@
 
 import json
 import sqlite3
+from datetime import UTC, datetime
 from pathlib import Path
 
-from research_mesh.domain.models import ResearchRun, RunEvent, RunStatus
+from research_mesh.domain.models import (
+    EvidenceSnippet,
+    Report,
+    ResearchRun,
+    RunEvent,
+    RunStatus,
+    SourceDocument,
+)
 
 
 class SQLiteRepository:
@@ -34,6 +42,27 @@ class SQLiteRepository:
                 event_type TEXT NOT NULL,
                 message TEXT NOT NULL,
                 created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS sources (
+                id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(id),
+                url TEXT NOT NULL,
+                title TEXT NOT NULL,
+                source_type TEXT NOT NULL,
+                domain TEXT NOT NULL,
+                quality_score REAL NOT NULL,
+                content_hash TEXT
+            );
+            CREATE TABLE IF NOT EXISTS evidence_snippets (
+                id TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL REFERENCES sources(id),
+                text TEXT NOT NULL,
+                locator TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS reports (
+                id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(id),
+                report_json TEXT NOT NULL
             );
             """
         )
@@ -74,8 +103,8 @@ class SQLiteRepository:
 
     def update_status(self, run_id: str, status: RunStatus, error: str | None = None) -> None:
         self._connection.execute(
-            "UPDATE runs SET status = ?, updated_at = datetime('now'), error = ? WHERE id = ?",
-            (status.value, error, run_id),
+            "UPDATE runs SET status = ?, updated_at = ?, error = ? WHERE id = ?",
+            (status.value, datetime.now(UTC).isoformat(), error, run_id),
         )
         self._connection.commit()
 
@@ -95,3 +124,87 @@ class SQLiteRepository:
 
     def close(self) -> None:
         self._connection.close()
+
+    def save_source(self, source: SourceDocument) -> None:
+        self._connection.execute(
+            """
+            INSERT OR REPLACE INTO sources
+            (id, run_id, url, title, source_type, domain, quality_score, content_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(source.id),
+                str(source.run_id),
+                str(source.url),
+                source.title,
+                source.source_type,
+                source.domain,
+                source.quality_score,
+                source.content_hash,
+            ),
+        )
+        self._connection.commit()
+
+    def list_sources_for_run(self, run_id: str) -> list[SourceDocument]:
+        rows = self._connection.execute(
+            "SELECT * FROM sources WHERE run_id = ? ORDER BY quality_score DESC",
+            (run_id,),
+        ).fetchall()
+        return [
+            SourceDocument.model_validate(
+                {
+                    "id": row["id"],
+                    "run_id": row["run_id"],
+                    "url": row["url"],
+                    "title": row["title"],
+                    "source_type": row["source_type"],
+                    "domain": row["domain"],
+                    "quality_score": row["quality_score"],
+                    "content_hash": row["content_hash"],
+                }
+            )
+            for row in rows
+        ]
+
+    def save_evidence(self, evidence: EvidenceSnippet) -> None:
+        self._connection.execute(
+            """
+            INSERT OR REPLACE INTO evidence_snippets (id, source_id, text, locator)
+            VALUES (?, ?, ?, ?)
+            """,
+            (str(evidence.id), str(evidence.source_id), evidence.text, evidence.locator),
+        )
+        self._connection.commit()
+
+    def list_evidence_for_source(self, source_id: str) -> list[EvidenceSnippet]:
+        rows = self._connection.execute(
+            "SELECT * FROM evidence_snippets WHERE source_id = ?",
+            (source_id,),
+        ).fetchall()
+        return [
+            EvidenceSnippet.model_validate(
+                {
+                    "id": row["id"],
+                    "source_id": row["source_id"],
+                    "text": row["text"],
+                    "locator": row["locator"],
+                }
+            )
+            for row in rows
+        ]
+
+    def save_report(self, report: Report) -> None:
+        self._connection.execute(
+            "INSERT OR REPLACE INTO reports (id, run_id, report_json) VALUES (?, ?, ?)",
+            (str(report.id), str(report.run_id), report.model_dump_json()),
+        )
+        self._connection.commit()
+
+    def get_report_for_run(self, run_id: str) -> Report | None:
+        row = self._connection.execute(
+            "SELECT report_json FROM reports WHERE run_id = ? ORDER BY rowid DESC LIMIT 1",
+            (run_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return Report.model_validate(json.loads(row["report_json"]))

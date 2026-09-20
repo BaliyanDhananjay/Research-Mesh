@@ -23,3 +23,4 @@ def test_run_status_update_is_persisted() -> None:
     restored = repository.get_run(str(run.id))
     assert restored is not None
     assert restored.status is RunStatus.RUNNING
+    assert restored.updated_at.tzinfo is not None

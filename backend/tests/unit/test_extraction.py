@@ -1,8 +1,13 @@
+import io
+
+import pytest
+from pypdf import PdfWriter
 from research_mesh.retrieval.extraction import (
     canonicalize_url,
     chunk_text,
     content_hash,
     deduplicate_candidates,
+    extract_pdf_text,
     extract_text,
 )
 from research_mesh.retrieval.models import SourceCandidate
@@ -10,8 +15,7 @@ from research_mesh.retrieval.models import SourceCandidate
 
 def test_html_extraction_ignores_code_and_scripts() -> None:
     html = (
-        "<article><h1>Research title</h1><p>Useful evidence.</p>"
-        "<script>secret()</script></article>"
+        "<article><h1>Research title</h1><p>Useful evidence.</p><script>secret()</script></article>"
     )
 
     assert extract_text(html) == "Research title Useful evidence."
@@ -43,3 +47,22 @@ def test_chunking_respects_maximum_size() -> None:
     assert len(chunks) > 1
     assert all(len(chunk) <= 100 for chunk in chunks)
     assert all(chunk for chunk in chunks)
+
+
+def test_pdf_extraction_succeeds_for_a_valid_pdf() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+
+    assert extract_pdf_text(buffer.getvalue()) == ""
+
+
+def test_pdf_extraction_rejects_invalid_bytes() -> None:
+    with pytest.raises(ValueError):
+        extract_pdf_text(b"not a pdf")
+
+
+def test_pdf_extraction_rejects_empty_bytes() -> None:
+    with pytest.raises(ValueError):
+        extract_pdf_text(b"")

@@ -1,10 +1,13 @@
 """Convert fetched source content into normalized, citeable evidence."""
 
 import hashlib
+import io
 import re
 from collections.abc import Iterable
 from html.parser import HTMLParser
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+from pypdf import PdfReader
 
 from research_mesh.retrieval.models import SourceCandidate
 
@@ -64,6 +67,18 @@ def extract_text(content: str, *, content_type: str = "text/html") -> str:
 
 def normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def extract_pdf_text(data: bytes) -> str:
+    """Extract normalized text from PDF bytes; never raises anything but ValueError."""
+    if not data:
+        raise ValueError("PDF content is empty")
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        pages_text = [page.extract_text() or "" for page in reader.pages]
+    except Exception as error:  # pypdf can raise many error types on malformed input
+        raise ValueError(f"Unable to parse PDF content: {error}") from error
+    return normalize_text(" ".join(pages_text))
 
 
 def chunk_text(text: str, *, max_chars: int = 800) -> list[str]:
