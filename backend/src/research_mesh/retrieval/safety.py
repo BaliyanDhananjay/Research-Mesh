@@ -20,3 +20,17 @@ def validate_fetch_url(url: str) -> None:
         return
     if address.is_private or address.is_loopback or address.is_link_local or address.is_reserved:
         raise ValueError("Private, loopback, link-local, and reserved IPs are not allowed")
+
+
+def validate_configured_endpoint(url: str) -> None:
+    """Check an operator-configured service URL (not attacker-controlled fetch input).
+
+    Unlike validate_fetch_url, this allows localhost/private addresses since such
+    endpoints (e.g. a local SearXNG instance) are trusted infrastructure, not
+    user-supplied targets.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("Only HTTP and HTTPS URLs are supported")
+    if not parsed.hostname:
+        raise ValueError("URL must include a hostname")

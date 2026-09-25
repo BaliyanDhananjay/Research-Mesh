@@ -1,5 +1,6 @@
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 from research_mesh.domain.models import ResearchRequest, RunStatus
@@ -74,11 +75,12 @@ class _FakeChatClient:
 
 
 def _build_orchestrator(
-    chat_client: _FakeChatClient,
+    chat_client: _FakeChatClient, tmp_path: Path
 ) -> tuple[ResearchOrchestrator, SQLiteRepository]:
     repository = SQLiteRepository(":memory:")
     vector_store = ChromaVectorStore(
-        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding")
+        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding"),
+        persist_directory=str(tmp_path),
     )
     candidate = SourceCandidate(
         url="https://example.com/coral",
@@ -105,9 +107,9 @@ def _build_orchestrator(
     return orchestrator, repository
 
 
-def test_orchestrator_runs_full_pipeline_and_persists_a_grounded_report() -> None:
+def test_orchestrator_runs_full_pipeline_and_persists_a_grounded_report(tmp_path: Path) -> None:
     chat_client = _FakeChatClient('{"search_queries": ["coral bleaching causes"]}')
-    orchestrator, repository = _build_orchestrator(chat_client)
+    orchestrator, repository = _build_orchestrator(chat_client, tmp_path)
     request = ResearchRequest(question="What causes coral bleaching?")
 
     report = orchestrator.run(request)
@@ -124,9 +126,9 @@ def test_orchestrator_runs_full_pipeline_and_persists_a_grounded_report() -> Non
     assert run.status is RunStatus.COMPLETED
 
 
-def test_orchestrator_marks_run_failed_when_report_is_not_grounded() -> None:
+def test_orchestrator_marks_run_failed_when_report_is_not_grounded(tmp_path: Path) -> None:
     chat_client = _FakeChatClient('{"search_queries": ["coral bleaching causes"]}', grounded=False)
-    orchestrator, repository = _build_orchestrator(chat_client)
+    orchestrator, repository = _build_orchestrator(chat_client, tmp_path)
     request = ResearchRequest(question="What causes coral bleaching?")
 
     with pytest.raises(ResearchRunFailed) as exc_info:

@@ -6,7 +6,7 @@ from typing import Protocol
 import httpx
 
 from research_mesh.retrieval.models import SourceCandidate
-from research_mesh.retrieval.safety import validate_fetch_url
+from research_mesh.retrieval.safety import validate_configured_endpoint
 
 
 class SearchProvider(Protocol):
@@ -21,7 +21,7 @@ class SearXNGSearchProvider:
         client: httpx.Client | None = None,
         timeout_seconds: float = 10.0,
     ) -> None:
-        validate_fetch_url(endpoint)
+        validate_configured_endpoint(endpoint)
         self.endpoint = endpoint
         self._client = client or httpx.Client(timeout=timeout_seconds)
         self._owns_client = client is None

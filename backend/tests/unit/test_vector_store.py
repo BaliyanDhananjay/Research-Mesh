@@ -1,4 +1,5 @@
 import hashlib
+from pathlib import Path
 
 import pytest
 from research_mesh.memory.vector_store import CallableEmbeddingFunction, ChromaVectorStore
@@ -19,8 +20,10 @@ def _test_embedding_function() -> CallableEmbeddingFunction:
     return CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding")
 
 
-def test_query_is_scoped_to_the_requesting_run() -> None:
-    store = ChromaVectorStore(embedding_function=_test_embedding_function())
+def test_query_is_scoped_to_the_requesting_run(tmp_path: Path) -> None:
+    store = ChromaVectorStore(
+        embedding_function=_test_embedding_function(), persist_directory=str(tmp_path)
+    )
 
     store.add_evidence(
         run_id="run-a", source_id="source-1", chunk_id="chunk-1", text="Coral reefs are bleaching."
@@ -36,15 +39,19 @@ def test_query_is_scoped_to_the_requesting_run() -> None:
     assert results[0].source_id == "source-1"
 
 
-def test_add_evidence_rejects_empty_text() -> None:
-    store = ChromaVectorStore(embedding_function=_test_embedding_function())
+def test_add_evidence_rejects_empty_text(tmp_path: Path) -> None:
+    store = ChromaVectorStore(
+        embedding_function=_test_embedding_function(), persist_directory=str(tmp_path)
+    )
 
     with pytest.raises(ValueError):
         store.add_evidence(run_id="run-a", source_id="source-1", chunk_id="chunk-1", text="   ")
 
 
-def test_query_rejects_invalid_top_k() -> None:
-    store = ChromaVectorStore(embedding_function=_test_embedding_function())
+def test_query_rejects_invalid_top_k(tmp_path: Path) -> None:
+    store = ChromaVectorStore(
+        embedding_function=_test_embedding_function(), persist_directory=str(tmp_path)
+    )
     store.add_evidence(run_id="run-a", source_id="source-1", chunk_id="chunk-1", text="Evidence")
 
     with pytest.raises(ValueError):

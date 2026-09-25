@@ -20,7 +20,9 @@ class SQLiteRepository:
         self.database_path = Path(database_path)
         if str(self.database_path) != ":memory:":
             self.database_path.parent.mkdir(parents=True, exist_ok=True)
-        self._connection = sqlite3.connect(self.database_path)
+        # check_same_thread=False: a run is created on the request thread and
+        # executed on a background thread, sequentially, never concurrently.
+        self._connection = sqlite3.connect(self.database_path, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._connection.execute("PRAGMA foreign_keys = ON")
         self._create_schema()
@@ -121,6 +123,24 @@ class SQLiteRepository:
             ),
         )
         self._connection.commit()
+
+    def list_events_for_run(self, run_id: str) -> list[RunEvent]:
+        rows = self._connection.execute(
+            "SELECT * FROM run_events WHERE run_id = ? ORDER BY created_at ASC",
+            (run_id,),
+        ).fetchall()
+        return [
+            RunEvent.model_validate(
+                {
+                    "id": row["id"],
+                    "run_id": row["run_id"],
+                    "event_type": row["event_type"],
+                    "message": row["message"],
+                    "created_at": row["created_at"],
+                }
+            )
+            for row in rows
+        ]
 
     def close(self) -> None:
         self._connection.close()

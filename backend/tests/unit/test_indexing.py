@@ -1,4 +1,5 @@
 import hashlib
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -30,14 +31,15 @@ def _make_source(run_id: UUID) -> SourceDocument:
     )
 
 
-def test_index_source_document_persists_and_indexes_chunks() -> None:
+def test_index_source_document_persists_and_indexes_chunks(tmp_path: Path) -> None:
     repository = SQLiteRepository(":memory:")
     run = ResearchRun(request=ResearchRequest(question="What causes coral bleaching?"))
     repository.save_run(run)
     source = _make_source(run.id)
     repository.save_source(source)
     vector_store = ChromaVectorStore(
-        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding")
+        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding"),
+        persist_directory=str(tmp_path),
     )
 
     snippets = index_source_document(
@@ -56,14 +58,15 @@ def test_index_source_document_persists_and_indexes_chunks() -> None:
     assert any(match.chunk_id == str(snippets[0].id) for match in matches)
 
 
-def test_index_source_document_rejects_empty_text() -> None:
+def test_index_source_document_rejects_empty_text(tmp_path: Path) -> None:
     repository = SQLiteRepository(":memory:")
     run = ResearchRun(request=ResearchRequest(question="What causes coral bleaching?"))
     repository.save_run(run)
     source = _make_source(run.id)
     repository.save_source(source)
     vector_store = ChromaVectorStore(
-        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding")
+        embedding_function=CallableEmbeddingFunction(_hash_embed, name="test-hash-embedding"),
+        persist_directory=str(tmp_path),
     )
 
     with pytest.raises(ValueError):

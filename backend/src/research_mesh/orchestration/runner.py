@@ -84,10 +84,19 @@ class ResearchOrchestrator:
         self._max_sources = max_sources
 
     def run(self, request: ResearchRequest) -> Report:
+        """Create and immediately execute a run; convenience for synchronous callers."""
+        run = self.create_run(request)
+        return self.execute(run)
+
+    def create_run(self, request: ResearchRequest) -> ResearchRun:
+        """Persist a new queued run and return it so callers can respond with its id."""
         run = ResearchRun(request=request)
         self._repository.save_run(run)
         self._emit(run.id, "run.created", "Research run queued")
+        return run
 
+    def execute(self, run: ResearchRun) -> Report:
+        request = run.request
         try:
             self._transition(run, RunStatus.RUNNING)
             self._emit(run.id, "run.started", "Research run started")
