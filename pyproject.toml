@@ -24,15 +24,14 @@ dev = [
     "mypy>=1.11,<2",
     "pytest>=8.3,<9",
     "ruff>=0.6,<1",
-    "streamlit>=1.38,<2",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["backend/src/research_mesh"]
 
 [tool.pytest.ini_options]
-pythonpath = ["backend/src", "frontend"]
-testpaths = ["backend/tests", "frontend/tests"]
+pythonpath = ["backend/src"]
+testpaths = ["backend/tests"]
 
 [tool.ruff]
 line-length = 100

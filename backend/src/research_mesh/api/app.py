@@ -1,10 +1,12 @@
 """FastAPI service exposing the research orchestration pipeline over HTTP."""
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from research_mesh.api.dependencies import (
     build_orchestrator,
@@ -33,6 +35,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Research Mesh API", lifespan=lifespan)
+
+_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.environ.get("RESEARCH_MESH_CORS_ORIGINS", _default_origins).split(","),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

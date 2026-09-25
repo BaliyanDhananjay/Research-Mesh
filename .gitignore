@@ -22,13 +22,11 @@ htmlcov/
 .env
 .env.*
 !.env.example
-frontend/.streamlit/secrets.toml
 
 # Local data and databases
 data/
 *.sqlite3
 *.db
-frontend/chroma/
 
 # Editor/OS
 .vscode/

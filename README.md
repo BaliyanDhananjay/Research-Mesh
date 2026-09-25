@@ -11,7 +11,7 @@ Research Mesh is a local-first, citation-backed multi-agent research assistant.
 - `backend/src/research_mesh/agents/` — structured agent contracts and claim validation
 - `backend/src/research_mesh/api/` — FastAPI service exposing the pipeline over HTTP
 - `backend/tests/` — backend unit and integration tests
-- `frontend/` — Streamlit dashboard; presentation-only, talks to the backend over HTTP
+- `frontend/` — React + TypeScript dashboard (Vite); talks to the backend over HTTP only
 - `docs/` — architecture, setup, and evaluation documentation as the project grows
 
 ## Development
@@ -39,9 +39,16 @@ via the environment variables in `.env.example`.
 
 ```powershell
 cd frontend
-py -m pip install -r requirements.txt
-py -m streamlit run app.py
+npm install
+npm run dev
 ```
 
-Set `RESEARCH_MESH_API_BASE_URL` if the backend isn't running at `http://localhost:8000`.
+Opens at `http://localhost:5173`. Copy `frontend/.env.example` to `frontend/.env` and set
+`VITE_API_BASE_URL` if the backend isn't running at `http://localhost:8000`.
+
+```powershell
+npm run build   # production build
+npm test        # Vitest + React Testing Library
+npm run lint    # Oxlint
+```
 
