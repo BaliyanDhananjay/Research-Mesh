@@ -2,6 +2,7 @@ import hashlib
 from pathlib import Path
 
 import pytest
+
 from research_mesh.memory.vector_store import CallableEmbeddingFunction, ChromaVectorStore
 
 _DIMENSIONS = 16

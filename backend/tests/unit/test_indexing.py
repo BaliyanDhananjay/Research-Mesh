@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
+
 from research_mesh.domain.models import ResearchRequest, ResearchRun, SourceDocument
 from research_mesh.memory.sqlite import SQLiteRepository
 from research_mesh.memory.vector_store import CallableEmbeddingFunction, ChromaVectorStore

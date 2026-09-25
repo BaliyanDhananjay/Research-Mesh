@@ -2,6 +2,7 @@ import io
 
 import pytest
 from pypdf import PdfWriter
+
 from research_mesh.retrieval.extraction import (
     canonicalize_url,
     chunk_text,

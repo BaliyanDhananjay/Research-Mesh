@@ -1,5 +1,6 @@
 import httpx
 import pytest
+
 from research_mesh.retrieval.search import SearXNGSearchProvider
 
 

@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from research_mesh.domain.models import ResearchRequest, RunStatus
 from research_mesh.memory.sqlite import SQLiteRepository
 from research_mesh.memory.vector_store import CallableEmbeddingFunction, ChromaVectorStore

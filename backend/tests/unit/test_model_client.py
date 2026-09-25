@@ -1,6 +1,7 @@
 import httpx
 import pytest
 from ollama import Client
+
 from research_mesh.orchestration.model_client import ChatMessage, OllamaChatClient
 
 
