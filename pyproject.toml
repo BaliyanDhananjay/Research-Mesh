@@ -27,11 +27,11 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/research_mesh"]
+packages = ["backend/src/research_mesh"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+pythonpath = ["backend/src"]
+testpaths = ["backend/tests"]
 
 [tool.ruff]
 line-length = 100
