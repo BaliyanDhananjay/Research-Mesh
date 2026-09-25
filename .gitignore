@@ -28,6 +28,11 @@ data/
 *.sqlite3
 *.db
 
+# Frontend build artifacts (frontend/ itself lives on the frontend branch;
+# these are gitignored here too so they never show up while on this branch)
+frontend/node_modules/
+frontend/dist/
+
 # Editor/OS
 .vscode/
 .idea/
