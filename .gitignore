@@ -28,9 +28,8 @@ data/
 *.sqlite3
 *.db
 
-# Frontend build artifacts (the frontend branch is rooted at "/", not
-# nested under frontend/; these are gitignored here too so switching
-# branches doesn't leave stray untracked files on backend)
+# Frontend build artifacts (node_modules/ with no leading slash matches at
+# any depth, so this covers frontend/node_modules/ too)
 node_modules/
 
 # Editor/OS
